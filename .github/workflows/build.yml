@@ -14,20 +14,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Theos
-        uses: Randomblock1/theos-action@v1
+      - name: Setup Theos
+        uses: iossxx/theos-action@v1
+        with:
+          theos-src: https://github.com/theos/theos
+          theos-sdks: https://github.com/theos/sdks
 
-      - name: Build
-        run: make package FINALPACKAGE=1
-
-      - name: Extract SASHOP.dylib
+      - name: Build package
         run: |
-          mkdir -p extracted
-          dpkg-deb -x packages/*.deb extracted
-          find extracted -name "SASHOP.dylib" -exec cp {} ./SASHOP.dylib \;
+          make clean
+          make package FINALPACKAGE=1
 
-      - name: Upload SASHOP.dylib
+      - name: Find dylib
+        run: |
+          find packages -type f -name "*.deb" -print
+          mkdir -p output
+          dpkg-deb -x packages/*.deb output
+          find output -name "SASHOP.dylib" -exec cp {} output/SASHOP.dylib \;
+
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: SASHOP-build
-          path: SASHOP.dylib
+          path: output/SASHOP.dylib
