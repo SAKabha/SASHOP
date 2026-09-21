@@ -14,26 +14,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Theos
-        uses: iossxx/theos-action@v1
-        with:
-          theos-src: https://github.com/theos/theos
-          theos-sdks: https://github.com/theos/sdks
-
-      - name: Build package
+      - name: Install Theos
         run: |
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          brew install ldid dpkg
+
+      - name: Build SASHOP
+        run: |
+          export THEOS="$HOME/theos"
           make clean
           make package FINALPACKAGE=1
 
-      - name: Find dylib
+      - name: Extract SASHOP.dylib
         run: |
-          find packages -type f -name "*.deb" -print
           mkdir -p output
           dpkg-deb -x packages/*.deb output
-          find output -name "SASHOP.dylib" -exec cp {} output/SASHOP.dylib \;
+          find output -name "SASHOP.dylib" -exec cp {} ./SASHOP.dylib \;
+          file SASHOP.dylib
 
-      - name: Upload build
+      - name: Upload SASHOP.dylib
         uses: actions/upload-artifact@v4
         with:
           name: SASHOP-build
-          path: output/SASHOP.dylib
+          path: SASHOP.dylib
