@@ -1,0 +1,33 @@
+name: Build SASHOP
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Theos
+        uses: Randomblock1/theos-action@v1
+
+      - name: Build
+        run: make package FINALPACKAGE=1
+
+      - name: Extract SASHOP.dylib
+        run: |
+          mkdir -p extracted
+          dpkg-deb -x packages/*.deb extracted
+          find extracted -name "SASHOP.dylib" -exec cp {} ./SASHOP.dylib \;
+
+      - name: Upload SASHOP.dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: SASHOP-build
+          path: SASHOP.dylib
